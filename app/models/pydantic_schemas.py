@@ -71,7 +71,6 @@ class MessageModel(BaseModel):
     session_id: int
     role: str
     content: str
-    metadata: Optional[Dict[str, Any]] = None
     created_at: datetime
 
 
@@ -79,7 +78,6 @@ class CreateMessageRequest(BaseModel):
     session_id: int
     role: str
     content: str
-    metadata: Optional[Dict[str, Any]] = None
 
 
 # --- AI ---
