@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal AI FastAPI Test</title>
+    <link rel="stylesheet" href="test.css">
+</head>
+<body>
+    <h1>Legal AI FastAPI Test Page</h1>
+    <form id="registerForm">
+        <h2>Register</h2>
+        <input type="text" id="regUsername" placeholder="Username" required><br>
+        <input type="email" id="regEmail" placeholder="Email" required><br>
+        <input type="password" id="regPassword" placeholder="Password" required><br>
+        <button type="submit">Register</button>
+    </form>
+    <div id="registerResult"></div>
+    <hr>
+    <form id="loginForm">
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email" required><br>
+        <input type="password" id="password" placeholder="Password" required><br>
+        <button type="submit">Login</button>
+    </form>
+    <div id="loginResult"></div>
+    <hr>
+    <form id="generateForm">
+        <h2>Generate Legal Document</h2>
+        <input type="text" id="prompt" placeholder="Prompt" required><br>
+        <button type="submit">Generate</button>
+    </form>
+    <div id="generateResult"></div>
+    <script src="test.js"></script>
+</body>
+</html>
