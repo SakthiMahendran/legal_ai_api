@@ -19,11 +19,17 @@ class ClarificationService:
         )
 
     def clarify_query(self, query: str, summary_type: str = "comprehensive") -> dict:
-        # Run search
-        search_results = self.search_graph.search_legal_query(query)
-        # Summarize results
-        summary = self.summarizer.summarize_search_results(search_results, summary_type)
-        return {"search_results": search_results, "summary": summary}
+        """
+        Use LLM-powered search and summarization for legal clarification.
+        """
+        try:
+            search_results = self.search_graph.search_legal_query(query)
+            summary = self.summarizer.summarize_search_results(search_results, summary_type)
+            return {"search_results": search_results, "summary": summary}
+        except Exception as e:
+            import logging
+            logging.error(f"ClarificationService.clarify_query error: {e}")
+            return {"error": str(e)}
 
     def summarize_results(
         self, search_results: dict, summary_type: str = "comprehensive"

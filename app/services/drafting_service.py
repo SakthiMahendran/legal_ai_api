@@ -108,17 +108,23 @@ class DraftingService:
         return state_dict.get("final_document", "[No document generated]")
 
     def refine_document(self, current_draft: str, user_request: str) -> str:
-        # Placeholder: In a real implementation, this would use LLM or agent logic
-        # to refine the draft based on user_request. For now, append the request to the draft.
-        # You can later enhance this with actual LLM calls.
-        return f"[REFINED] {current_draft}\n\nUser request: {user_request}"
+        """
+        Use LLM-powered agent to refine a legal document draft.
+        """
+        import logging
+        try:
+            return self.agent.refine_document(current_draft, user_request)
+        except Exception as e:
+            logging.error(f"DraftingService.refine_document error: {e}")
+            return f"Error: {e}"
 
     def extract_details(self, conversation_history: List[Dict[str, str]]) -> dict:
-        # Placeholder: Extract details from conversation history. In a real implementation,
-        # this would use agent/LLM logic to parse and extract structured info.
-        # For now, just return a dummy details dict.
-        details = {
-            f"Message {i+1}": msg["content"]
-            for i, msg in enumerate(conversation_history)
-        }
-        return {"details": details}
+        """
+        Use LLM-powered agent to extract structured details from conversation history.
+        """
+        import logging
+        try:
+            return self.agent.extract_details(conversation_history)
+        except Exception as e:
+            logging.error(f"DraftingService.extract_details error: {e}")
+            return {"error": str(e)}

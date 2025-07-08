@@ -16,6 +16,13 @@ from typing import List
 
 router = APIRouter()
 
+def generate_fallback_document(prompt: str) -> str:
+    """
+    Simple fallback document generator using the prompt as the subject/title.
+    """
+    return f"""[Fallback Generated Document]\n\nTitle: {prompt}\n\nThis is a template-based legal document generated as a fallback. Please provide more details for a more specific draft.\n\n[Note: This is a fallback and not a legally binding document. Consult a qualified attorney for legal matters.]"""
+
+
 from app.services.drafting_service import DraftingService
 from app.services.message_service import MessageService
 

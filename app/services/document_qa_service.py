@@ -11,8 +11,15 @@ class DocumentQAService:
         self.rag_agent = DocumentQARAG()
 
     def answer_query(self, query: str, session_id: str = None) -> dict:
-        # Use the RAG agent to answer a query over uploaded documents
-        return self.rag_agent.query_documents(query, session_id=session_id)
+        """
+        Use the RAG agent to answer a query over uploaded documents (LLM-powered).
+        """
+        try:
+            return self.rag_agent.query_documents(query, session_id=session_id)
+        except Exception as e:
+            import logging
+            logging.error(f"DocumentQAService.answer_query error: {e}")
+            return {"error": str(e)}
 
     def upload_document(
         self, file_bytes: bytes, filename: str, session_id: str = None
