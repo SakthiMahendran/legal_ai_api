@@ -299,6 +299,122 @@ async function listMessages() {
   }
 }
 
+// Chat Functions
+async function sendChatMessage() {
+  const button = event.target;
+  const chatInput = document.getElementById("chat-input");
+  const message = chatInput.value.trim();
+
+  if (!message) {
+    alert("Please enter a message!");
+    return;
+  }
+
+  if (!currentSessionId) {
+    alert("Please create or select a session first!");
+    return;
+  }
+
+  setLoading(button, true);
+
+  try {
+    // Add user message to chat immediately
+    addChatMessage("user", message);
+    chatInput.value = "";
+
+    // Show typing indicator
+    const typingIndicator = addTypingIndicator();
+
+    // Send to AI
+    const data = await apiRequest("/ai/chat/", {
+      method: "POST",
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        message: message,
+      }),
+    });
+
+    // Remove typing indicator
+    removeTypingIndicator(typingIndicator);
+
+    // Add AI response to chat
+    addChatMessage("assistant", data.ai_message.content);
+
+    showResponse(data);
+  } catch (error) {
+    removeTypingIndicator();
+    addChatMessage("system", `Error: ${error.message}`);
+    showResponse({ error: error.message }, true);
+  } finally {
+    setLoading(button, false);
+  }
+}
+
+function addChatMessage(role, content) {
+  const chatMessages = document.getElementById("chat-messages");
+  const messageDiv = document.createElement("div");
+  messageDiv.className = `chat-message ${role}`;
+
+  const contentDiv = document.createElement("div");
+  contentDiv.className = "message-content";
+
+  if (role === "user") {
+    contentDiv.innerHTML = `<strong>You:</strong> ${content}`;
+  } else if (role === "assistant") {
+    contentDiv.innerHTML = `<strong>Legal AI Assistant:</strong> ${content.replace(
+      /\n/g,
+      "<br>"
+    )}`;
+  } else {
+    contentDiv.innerHTML = content;
+  }
+
+  messageDiv.appendChild(contentDiv);
+  chatMessages.appendChild(messageDiv);
+
+  // Scroll to bottom
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  return messageDiv;
+}
+
+function addTypingIndicator() {
+  const chatMessages = document.getElementById("chat-messages");
+  const typingDiv = document.createElement("div");
+  typingDiv.className = "typing-indicator";
+  typingDiv.innerHTML = `
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+    `;
+
+  chatMessages.appendChild(typingDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  return typingDiv;
+}
+
+function removeTypingIndicator(indicator) {
+  if (indicator && indicator.parentNode) {
+    indicator.parentNode.removeChild(indicator);
+  } else {
+    // Remove any typing indicators
+    const indicators = document.querySelectorAll(".typing-indicator");
+    indicators.forEach((ind) => ind.remove());
+  }
+}
+
+function clearChat() {
+  const chatMessages = document.getElementById("chat-messages");
+  chatMessages.innerHTML = `
+        <div class="chat-message system">
+            <div class="message-content">
+                <strong>Legal AI Assistant:</strong> Hello! I'm your legal AI assistant. I can help you with legal document drafting, answer legal questions, and provide general legal information. How can I assist you today?
+            </div>
+        </div>
+    `;
+}
+
 // AI Functions
 async function generateDocument() {
   const button = event.target;
@@ -444,6 +560,7 @@ async function runAllTests() {
     { name: "Login User", func: testLogin },
     { name: "Create Session", func: testCreateSession },
     { name: "Send Message", func: testSendMessage },
+    { name: "AI Chat", func: testAIChat },
     { name: "Generate Document", func: testGenerateDocument },
     { name: "Upload Document", func: testUploadDocument },
     { name: "List All Data", func: testListAll },
@@ -519,6 +636,16 @@ async function testSendMessage() {
   });
 }
 
+async function testAIChat() {
+  return apiRequest("/ai/chat/", {
+    method: "POST",
+    body: JSON.stringify({
+      session_id: currentSessionId,
+      message: "What is a contract and what are its key elements?",
+    }),
+  });
+}
+
 async function testGenerateDocument() {
   return apiRequest("/ai/generate/", {
     method: "POST",
@@ -577,4 +704,15 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("Legal AI API Test Frontend loaded");
   updateAuthStatus("Not logged in", false);
   updateCurrentSession(null);
+
+  // Add Enter key functionality for chat input
+  const chatInput = document.getElementById("chat-input");
+  if (chatInput) {
+    chatInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
+  }
 });
