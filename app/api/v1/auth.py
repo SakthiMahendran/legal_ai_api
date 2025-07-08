@@ -1,6 +1,13 @@
 from fastapi import APIRouter, status, HTTPException, Depends
-from legal_ai_api.app.models.pydantic_schemas import (
-    RegisterRequest, RegisterResponse, LoginRequest, LoginResponse, RefreshRequest, RefreshResponse, LogoutRequest, LogoutResponse
+from app.models.pydantic_schemas import (
+    RegisterRequest,
+    RegisterResponse,
+    LoginRequest,
+    LoginResponse,
+    RefreshRequest,
+    RefreshResponse,
+    LogoutRequest,
+    LogoutResponse,
 )
 from fastapi.responses import JSONResponse
 from datetime import datetime, timedelta
@@ -29,6 +36,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
 def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
@@ -39,13 +47,18 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
+
 
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-@router.post('/register/', response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/register/", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED
+)
 def register(request: RegisterRequest):
     if request.email in fake_users:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -58,18 +71,29 @@ def register(request: RegisterRequest):
         "updated_at": datetime.utcnow().isoformat(),
     }
     fake_users[request.email] = user
-    return RegisterResponse(id=user["id"], username=user["username"], email=user["email"], created_at=user["created_at"], updated_at=user["updated_at"])
+    return RegisterResponse(
+        id=user["id"],
+        username=user["username"],
+        email=user["email"],
+        created_at=user["created_at"],
+        updated_at=user["updated_at"],
+    )
 
-@router.post('/login/', response_model=LoginResponse)
+
+@router.post("/login/", response_model=LoginResponse)
 def login(request: LoginRequest):
     user = fake_users.get(request.email)
     if not user or not verify_password(request.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    access_token = create_access_token({"sub": user["email"]}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    access_token = create_access_token(
+        {"sub": user["email"]},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
     refresh_token = create_refresh_token({"sub": user["email"]})
     return LoginResponse(access=access_token, refresh=refresh_token)
 
-@router.post('/refresh/', response_model=RefreshResponse)
+
+@router.post("/refresh/", response_model=RefreshResponse)
 def refresh_token(request: RefreshRequest):
     try:
         payload = jwt.decode(request.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -78,12 +102,15 @@ def refresh_token(request: RefreshRequest):
         email = payload.get("sub")
         if email not in fake_users:
             raise HTTPException(status_code=401, detail="User not found")
-        access_token = create_access_token({"sub": email}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+        access_token = create_access_token(
+            {"sub": email}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        )
         return RefreshResponse(access_token=access_token)
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-@router.post('/logout/', response_model=LogoutResponse)
+
+@router.post("/logout/", response_model=LogoutResponse)
 def logout(request: LogoutRequest):
     # For stateless JWT, logout is handled on client side (token discard)
     # To support blacklist, would need persistent storage

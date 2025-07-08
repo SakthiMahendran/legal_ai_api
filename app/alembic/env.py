@@ -4,8 +4,8 @@ from alembic import context
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-from legal_ai_api.app.db import Base
-from legal_ai_api.app.models.sql_models import *
+from app.db import Base
+from app.models.sql_models import *
 
 config = context.config
 fileConfig(config.config_file_name)
