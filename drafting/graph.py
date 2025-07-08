@@ -21,21 +21,31 @@ from .prompt_templates import (
     get_questions_for_document,
     get_template_for_document,
     get_missing_required_fields,
-    format_collected_info_for_display
+    format_collected_info_for_display,
 )
 
 load_dotenv()
+
 
 class AgentState(BaseModel):
     session_id: str = Field(description="Session identifier")
     user_input: str = Field(default="", description="Current user input")
     document_type: str = Field(default="", description="Type of document to draft")
-    collected_info: Dict[str, Any] = Field(default_factory=dict, description="Collected information")
-    current_question: str = Field(default="", description="Current question being asked")
-    conversation_history: List[Dict[str, str]] = Field(default_factory=list, description="Conversation history")
-    is_complete: bool = Field(default=False, description="Whether all information is collected")
+    collected_info: Dict[str, Any] = Field(
+        default_factory=dict, description="Collected information"
+    )
+    current_question: str = Field(
+        default="", description="Current question being asked"
+    )
+    conversation_history: List[Dict[str, str]] = Field(
+        default_factory=list, description="Conversation history"
+    )
+    is_complete: bool = Field(
+        default=False, description="Whether all information is collected"
+    )
     final_document: str = Field(default="", description="Generated final document")
     error_message: str = Field(default="", description="Error message if any")
+
 
 class LegalDocumentAgent:
     def __init__(self):
@@ -53,7 +63,7 @@ class LegalDocumentAgent:
             default_headers={
                 "HTTP-Referer": "http://localhost:8501",
                 "X-Title": "Agentic Legal AI",
-            }
+            },
         )
         self.model = "deepseek/deepseek-chat-v3-0324:free"
 
@@ -83,18 +93,12 @@ class LegalDocumentAgent:
         workflow.add_conditional_edges(
             "identify_document",
             self.should_continue_after_identification,
-            {
-                "ask_question": "ask_question",
-                "error": "handle_error"
-            }
+            {"ask_question": "ask_question", "error": "handle_error"},
         )
         workflow.add_conditional_edges(
             "ask_question",
             self.should_continue_after_asking,
-            {
-                "process_answer": "process_answer",
-                "error": "handle_error"
-            }
+            {"process_answer": "process_answer", "error": "handle_error"},
         )
         workflow.add_conditional_edges(
             "process_answer",
@@ -102,8 +106,8 @@ class LegalDocumentAgent:
             {
                 "ask_question": "ask_question",
                 "generate_document": "generate_document",
-                "error": "handle_error"
-            }
+                "error": "handle_error",
+            },
         )
         workflow.add_edge("generate_document", END)
         workflow.add_edge("handle_error", END)
@@ -124,7 +128,7 @@ class LegalDocumentAgent:
             "lease": "lease",
             "lease agreement": "lease",
             "rental agreement": "lease",
-            "residential lease agreement": "lease"
+            "residential lease agreement": "lease",
         }
         canonical_type = None
         for k, v in type_map.items():
@@ -159,7 +163,9 @@ class LegalDocumentAgent:
         question_config = questions[next_field]
         base_question = question_config["question"]
         if question_config.get("examples"):
-            examples_text = f"\nFor example: {', '.join(question_config['examples'][:3])}"
+            examples_text = (
+                f"\nFor example: {', '.join(question_config['examples'][:3])}"
+            )
             state["current_question"] = base_question + examples_text
         else:
             state["current_question"] = base_question
@@ -176,7 +182,9 @@ class LegalDocumentAgent:
                 collected_info[field] = user_input
                 break
         state["collected_info"] = collected_info
-        state["conversation_history"].append({"question": current_question, "answer": user_input})
+        state["conversation_history"].append(
+            {"question": current_question, "answer": user_input}
+        )
         # Only complete when all questions (required and optional) are answered
         missing_fields = [f for f in questions if f not in collected_info]
         if not missing_fields:
@@ -194,11 +202,17 @@ class LegalDocumentAgent:
         if document_type == "nda":
             disclosing_addr = collected_info.get("disclosing_party_address", "")
             receiving_addr = collected_info.get("receiving_party_address", "")
-            collected_info["disclosing_party_address_formatted"] = f" (Address: {disclosing_addr})" if disclosing_addr else ""
-            collected_info["receiving_party_address_formatted"] = f" (Address: {receiving_addr})" if receiving_addr else ""
+            collected_info["disclosing_party_address_formatted"] = (
+                f" (Address: {disclosing_addr})" if disclosing_addr else ""
+            )
+            collected_info["receiving_party_address_formatted"] = (
+                f" (Address: {receiving_addr})" if receiving_addr else ""
+            )
             exclusions = collected_info.get("specific_exclusions", "")
             if exclusions:
-                collected_info["specific_exclusions_formatted"] = f"Additional exclusions: {exclusions}\n"
+                collected_info["specific_exclusions_formatted"] = (
+                    f"Additional exclusions: {exclusions}\n"
+                )
             else:
                 collected_info["specific_exclusions_formatted"] = ""
 
@@ -206,11 +220,13 @@ class LegalDocumentAgent:
         llm_input = {
             "document_type": document_type,
             "collected_info": format_collected_info_for_display(collected_info),
-            "date": today
+            "date": today,
         }
         llm_result = self.get_llm_response(DOCUMENT_GENERATION_PROMPT, llm_input)
         if llm_result and not llm_result.lower().startswith("error"):
-            state["final_document"] = llm_result + "\n\n[Generated by LLM (Groq or Gemini)]"
+            state["final_document"] = (
+                llm_result + "\n\n[Generated by LLM (Groq or Gemini)]"
+            )
             state["is_complete"] = True
             return state
 
@@ -239,4 +255,4 @@ class LegalDocumentAgent:
     def should_continue_after_processing(self, state: Dict[str, Any]) -> str:
         if state.get("is_complete"):
             return "generate_document"
-        return "ask_question" 
+        return "ask_question"
