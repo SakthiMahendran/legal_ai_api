@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from legal_ai_api.app.db import Base
+from app.db import Base
+
 
 class User(Base):
     __tablename__ = "users"
@@ -12,6 +13,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     sessions = relationship("Session", back_populates="user")
+
 
 class Session(Base):
     __tablename__ = "sessions"
@@ -25,6 +27,7 @@ class Session(Base):
     messages = relationship("Message", back_populates="session")
     documents = relationship("Document", back_populates="session")
 
+
 class Message(Base):
     __tablename__ = "messages"
     id = Column(Integer, primary_key=True, index=True)
@@ -33,6 +36,7 @@ class Message(Base):
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     session = relationship("Session", back_populates="messages")
+
 
 class Document(Base):
     __tablename__ = "documents"
